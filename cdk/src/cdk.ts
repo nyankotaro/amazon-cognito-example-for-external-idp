@@ -9,7 +9,7 @@ import cloudfront = require("@aws-cdk/aws-cloudfront");
 import {BillingMode, StreamViewType} from "@aws-cdk/aws-dynamodb";
 import "source-map-support/register";
 import {AuthorizationType} from "@aws-cdk/aws-apigateway";
-import {CfnUserPool, CfnUserPoolIdentityProvider, SignInType, UserPool, UserPoolAttribute} from "@aws-cdk/aws-cognito";
+import {CfnUserPool, CfnUserPoolIdentityProvider, UserPool} from "@aws-cdk/aws-cognito";
 import {Utils} from "./utils";
 import {Runtime} from "@aws-cdk/aws-lambda";
 
@@ -121,8 +121,8 @@ export class BackendStack extends cdk.Stack {
 
     // high level construct
     const userPool: UserPool = new cognito.UserPool(this, id + "Pool", {
-      signInType: SignInType.EMAIL,
-      autoVerifiedAttributes: [UserPoolAttribute.EMAIL],
+      signInAliases: { email: true },
+      autoVerify:{ email: true },
       lambdaTriggers: {preTokenGeneration: preTokenGeneration}
     });
 
@@ -455,5 +455,6 @@ const stackRegion = Utils.getEnv("STACK_REGION");
 
 const stackProps = {env: {region: stackRegion, account: stackAccount}};
 const backendStack = new BackendStack(app, stackName, stackProps);
+iam.PermissionsBoundary.of(backendStack).apply(iam.ManagedPolicy.fromManagedPolicyArn(backendStack, 'PermissionBoundary', 'arn:aws:iam::' + stackAccount + ':policy/adm_skill-up_scope-permissions'));
 
 backendStack.templateOptions.transforms = ["AWS::Serverless-2016-10-31"];
